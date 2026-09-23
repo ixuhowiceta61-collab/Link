@@ -27,13 +27,14 @@ import {
 } from 'lucide-react';
 import { parseVideoUrl, SAMPLE_VIDEOS } from './utils/videoHelper.ts';
 import { InPagePlayer } from './components/InPagePlayer.tsx';
+import { BannerAdSlot } from './components/BannerAdSlot.tsx';
 import uploadedThumbnail from './assets/images/thumbnail_uploaded_1790149448086.jpg';
 
 type Language = 'bn' | 'en';
 type Theme = 'light' | 'dark';
 
 const TARGET_DEFAULT_URL =
-  'https://www.profitableratecpmnetwork.com/h5can1a6kf?key=1f487ec4c12509fbc3ca2b1632129777';
+  'https://www.profitableratecpmnetwork.com/p4cytkzc0t?key=c4a7468d219e3c52d904db81d2cecb7b';
 
 export default function App() {
   // Read initial query params if present
@@ -47,6 +48,7 @@ export default function App() {
   const defaultUrlParam = queryParams.get('url') || TARGET_DEFAULT_URL;
   const defaultTitleParam = queryParams.get('title') || '';
   const defaultBtnParam = queryParams.get('btn') || '';
+  const defaultDurationParam = queryParams.get('duration') || '';
   const defaultLangParam = (queryParams.get('lang') as Language) || 'bn';
 
   // Core state - default theme 'dark' matching the user's styling (#0b0e14)
@@ -63,6 +65,7 @@ export default function App() {
   const [btnText, setBtnText] = useState<string>(
     defaultBtnParam || (defaultLangParam === 'bn' ? 'এখনই ভিডিও দেখুন' : 'Watch Video Now')
   );
+  const [customDuration, setCustomDuration] = useState<string>(defaultDurationParam);
 
   // Functional UI state & Persistent Owner Stats (localStorage)
   const [clickCount, setClickCount] = useState<number>(() => {
@@ -104,6 +107,9 @@ export default function App() {
   // Parsed video details
   const videoInfo = useMemo(() => parseVideoUrl(videoUrl), [videoUrl]);
 
+  // Active mock video duration (custom or parsed from metadata)
+  const duration = customDuration || videoInfo.duration || '14:28';
+
   // Sync theme to root class
   useEffect(() => {
     if (theme === 'dark') {
@@ -121,9 +127,10 @@ export default function App() {
     params.set('url', videoUrl);
     if (titleText) params.set('title', titleText);
     if (btnText) params.set('btn', btnText);
+    if (customDuration) params.set('duration', customDuration);
     params.set('lang', lang);
     return `${base}?${params.toString()}`;
-  }, [videoUrl, titleText, btnText, lang]);
+  }, [videoUrl, titleText, btnText, customDuration, lang]);
 
   useEffect(() => {
     if (shareableUrl) {
@@ -436,28 +443,41 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-center items-center px-4 py-8 sm:py-12">
-        {!showInPagePlayer ? (
-          /* The Exact Dark Luxury Card requested by the user */
-          <div className="w-full flex flex-col items-center">
-            {/* Auto countdown banner if enabled */}
-            {autoRedirect && timerActive && (
-              <div className="w-full max-w-[420px] mb-3 p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs animate-pulse text-amber-200">
-                <div className="flex items-center gap-2">
-                  <Clock className="w-4 h-4" />
-                  <span>
-                    <strong>{countdown}</strong> {t.timerNotice}
-                  </span>
-                </div>
-                <button
-                  onClick={() => setTimerActive(false)}
-                  className="px-2 py-0.5 font-semibold bg-[#21262d] text-amber-300 border border-amber-700/60 rounded hover:bg-[#30363d]"
-                >
-                  {t.cancelTimer}
-                </button>
-              </div>
-            )}
+      {/* 1. Sticky Top Ad Banner (728x90 desktop / 320x50 mobile responsive placeholder) */}
+      <BannerAdSlot position="top-sticky" lang={lang} targetUrl={videoUrl} />
+
+      {/* Main Content Area with responsive sidebars & inline ads */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 sm:py-8 flex flex-col items-center">
+        {/* Adsterra 728x90 বা 320x50 Script Code Container - Top Inline */}
+        <BannerAdSlot position="inline" lang={lang} targetUrl={videoUrl} className="mb-4" />
+
+        {/* Layout container with optional desktop sidebars and centered content */}
+        <div className="w-full flex justify-center items-start gap-6">
+          {/* Left Sidebar Ad Slot (Desktop) */}
+          <BannerAdSlot position="sidebar" lang={lang} targetUrl={videoUrl} className="hidden xl:flex" />
+
+          {/* Center Card Content */}
+          <div className="flex-1 flex flex-col items-center max-w-[520px] w-full">
+            {!showInPagePlayer ? (
+              /* The Exact Dark Luxury Card requested by the user */
+              <div className="w-full flex flex-col items-center">
+                {/* Auto countdown banner if enabled */}
+                {autoRedirect && timerActive && (
+                  <div className="w-full max-w-[420px] mb-3 p-3 rounded-xl bg-amber-950/40 border border-amber-800/60 flex items-center justify-between text-xs animate-pulse text-amber-200">
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-4 h-4" />
+                      <span>
+                        <strong>{countdown}</strong> {t.timerNotice}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setTimerActive(false)}
+                      className="px-2 py-0.5 font-semibold bg-[#21262d] text-amber-300 border border-amber-700/60 rounded hover:bg-[#30363d]"
+                    >
+                      {t.cancelTimer}
+                    </button>
+                  </div>
+                )}
 
             {/* Small Toggleable Stats View for Landing Page Owner */}
             {showStatsView && (
@@ -615,7 +635,7 @@ export default function App() {
                 )}
               </div>
 
-              {/* 2. আপলোড করা ছবি ব্যবহার করে থাম্বনেইল (Thumbnail Box with glowing play overlay) */}
+              {/* 2. আপলোড করা ছবি ব্যবহার করে থাম্বনেইল (Thumbnail Box with glowing play overlay & duration) */}
               <a
                 href={videoUrl}
                 target="_blank"
@@ -633,6 +653,25 @@ export default function App() {
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-[rgba(255,0,0,0.9)] group-hover:bg-[#ff0000] w-[60px] h-[60px] rounded-full flex items-center justify-center text-white shadow-[0_0_20px_rgba(255,0,0,0.6)] group-hover:scale-110 transition-transform duration-200">
                   <Play className="w-6 h-6 fill-white translate-x-0.5" />
                 </div>
+
+                {/* ভিডিও ডিউরেশন ওভারলে (নিচে ডান কোনায়) */}
+                <span
+                  style={{
+                    position: 'absolute',
+                    bottom: '8px',
+                    right: '8px',
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    color: '#ffffff',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    pointerEvents: 'none',
+                  }}
+                  className="font-mono tracking-tight shadow-md flex items-center gap-1 z-10"
+                >
+                  {duration}
+                </span>
               </a>
 
               {/* 3. টাইটেল */}
@@ -779,7 +818,18 @@ export default function App() {
             isCopied={isCopied}
           />
         )}
+          </div>
+
+          {/* Right Sidebar Ad Slot (Desktop) */}
+          <BannerAdSlot position="sidebar" lang={lang} targetUrl={videoUrl} className="hidden lg:flex" />
+        </div>
+
+        {/* Adsterra 728x90 বা 320x50 Script Code Container - Bottom Inline */}
+        <BannerAdSlot position="inline" lang={lang} targetUrl={videoUrl} className="mt-6 mb-16 sm:mb-12" />
       </main>
+
+      {/* 2. Fixed Sticky Bottom Ad Banner (Matches user's exact specification) */}
+      <BannerAdSlot position="bottom-sticky" lang={lang} targetUrl={videoUrl} />
 
       {/* MODAL 1: Customize Video Link & Title */}
       {showConfigModal && (
@@ -852,6 +902,23 @@ export default function App() {
                 />
               </div>
 
+              {/* Video Duration Input */}
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block font-medium text-slate-300">
+                    {lang === 'bn' ? 'ভিডিও ডিউরেশন / দৈর্ঘ্য' : 'Video Duration'}
+                  </label>
+                  <span className="text-[11px] text-slate-400 font-mono">e.g. 14:28, 24:18</span>
+                </div>
+                <input
+                  type="text"
+                  value={duration}
+                  onChange={(e) => setCustomDuration(e.target.value)}
+                  placeholder="14:28"
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#30363d] bg-[#0b0e14] text-white focus:outline-none focus:ring-2 focus:ring-red-500 text-sm font-mono"
+                />
+              </div>
+
               {/* Auto-redirect toggle */}
               <div className="pt-2 border-t border-[#30363d] flex items-center justify-between">
                 <div>
@@ -896,14 +963,20 @@ export default function App() {
                         setInputUrl(sample.url);
                         setVideoUrl(sample.url);
                         setTitleText(lang === 'bn' ? sample.titleBn : sample.titleEn);
+                        setCustomDuration(sample.duration || '');
                       }}
                       className="text-left p-2.5 rounded-xl border border-[#30363d] hover:border-red-500 bg-[#0b0e14]/60 transition-colors"
                     >
                       <div className="text-xs font-semibold text-white truncate">
                         {lang === 'bn' ? sample.titleBn : sample.titleEn}
                       </div>
-                      <div className="text-[10px] text-slate-400 truncate">
-                        {sample.category}
+                      <div className="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
+                        <span className="truncate">{sample.category}</span>
+                        {sample.duration && (
+                          <span className="font-mono text-slate-300 bg-[#161b22] px-1.5 py-0.2 rounded border border-[#30363d] text-[10px] shrink-0">
+                            {sample.duration}
+                          </span>
+                        )}
                       </div>
                     </button>
                   ))}

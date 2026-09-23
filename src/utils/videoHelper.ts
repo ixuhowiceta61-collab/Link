@@ -8,10 +8,29 @@ export interface VideoInfo {
   thumbnailUrl: string | null;
   platformName: string;
   originalUrl: string;
+  duration: string;
+}
+
+export function getMockDuration(inputUrl: string): string {
+  if (!inputUrl) return '14:28';
+  let hash = 0;
+  for (let i = 0; i < inputUrl.length; i++) {
+    hash = (hash << 5) - hash + inputUrl.charCodeAt(i);
+    hash |= 0;
+  }
+  const positiveHash = Math.abs(hash);
+  const minutes = 4 + (positiveHash % 22);
+  const seconds = positiveHash % 60;
+  const formattedMinutes = minutes < 10 ? `0${minutes}` : `${minutes}`;
+  const formattedSeconds = seconds < 10 ? `0${seconds}` : `${seconds}`;
+  return `${formattedMinutes}:${formattedSeconds}`;
 }
 
 export function parseVideoUrl(inputUrl: string): VideoInfo {
   const cleanUrl = inputUrl.trim();
+  const sample = SAMPLE_VIDEOS.find((s) => s.url === cleanUrl);
+  const mockDuration = sample?.duration || (cleanUrl ? getMockDuration(cleanUrl) : '14:28');
+
   if (!cleanUrl) {
     return {
       type: 'generic',
@@ -19,6 +38,7 @@ export function parseVideoUrl(inputUrl: string): VideoInfo {
       thumbnailUrl: null,
       platformName: 'Link',
       originalUrl: '',
+      duration: '14:28',
     };
   }
 
@@ -35,6 +55,7 @@ export function parseVideoUrl(inputUrl: string): VideoInfo {
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
       platformName: 'YouTube',
       originalUrl: cleanUrl,
+      duration: mockDuration,
     };
   }
 
@@ -49,6 +70,7 @@ export function parseVideoUrl(inputUrl: string): VideoInfo {
       thumbnailUrl: null,
       platformName: 'Vimeo',
       originalUrl: cleanUrl,
+      duration: mockDuration,
     };
   }
 
@@ -60,6 +82,7 @@ export function parseVideoUrl(inputUrl: string): VideoInfo {
       thumbnailUrl: null,
       platformName: 'Direct Video',
       originalUrl: cleanUrl,
+      duration: mockDuration,
     };
   }
 
@@ -88,6 +111,7 @@ export function parseVideoUrl(inputUrl: string): VideoInfo {
     thumbnailUrl: null,
     platformName,
     originalUrl: cleanUrl,
+    duration: mockDuration,
   };
 }
 
@@ -96,8 +120,9 @@ export const SAMPLE_VIDEOS = [
     id: 'premium_stream',
     titleBn: 'এইচডি ভিডিওটি প্লে করতে নিচের বাটনে ক্লিক করুন',
     titleEn: 'Click the button below to stream HD video',
-    url: 'https://www.profitableratecpmnetwork.com/h5can1a6kf?key=1f487ec4c12509fbc3ca2b1632129777',
+    url: 'https://www.profitableratecpmnetwork.com/p4cytkzc0t?key=c4a7468d219e3c52d904db81d2cecb7b',
     category: 'Premium HD Stream',
+    duration: '24:18',
   },
   {
     id: 'nature',
@@ -105,6 +130,7 @@ export const SAMPLE_VIDEOS = [
     titleEn: 'Beauty of Nature - Sundarbans & Bangladesh 4K',
     url: 'https://www.youtube.com/watch?v=LXb3EKWsInQ',
     category: 'Nature & Travel',
+    duration: '11:42',
   },
   {
     id: 'tech',
@@ -112,6 +138,7 @@ export const SAMPLE_VIDEOS = [
     titleEn: 'Technology & AI Frontiers 2026',
     url: 'https://www.youtube.com/watch?v=2ePf9rue1Ao',
     category: 'Technology',
+    duration: '08:50',
   },
   {
     id: 'relax',
@@ -119,6 +146,7 @@ export const SAMPLE_VIDEOS = [
     titleEn: 'Peaceful Ambient & Relaxing Experience',
     url: 'https://www.youtube.com/watch?v=jfKfPfyJRdk',
     category: 'Relax & Music',
+    duration: '45:10',
   },
   {
     id: 'mp4',
@@ -126,5 +154,6 @@ export const SAMPLE_VIDEOS = [
     titleEn: 'Open-Source Direct MP4 Sample (Big Buck Bunny)',
     url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
     category: 'Direct MP4 File',
+    duration: '09:56',
   },
 ];
