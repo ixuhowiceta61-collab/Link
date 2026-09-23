@@ -1,0 +1,6 @@
+{
+  "name": "Video Link Landing - ভিডিও লিংক পোর্টাল",
+  "description": "A responsive video landing page featuring a centered layout, watch button, embedded player preview, and customizable video links.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
